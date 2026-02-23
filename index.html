@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Papua Store Pro</title>
+
+<style>
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#f2f4f8;
+}
+
+/* HEADER */
+header{
+  background:linear-gradient(135deg,#1e3c72,#2a5298,#ff512f);
+  background-size:300% 300%;
+  animation:move 8s infinite alternate;
+  color:white;
+  padding:20px;
+  text-align:center;
+  box-shadow:0 4px 15px rgba(0,0,0,0.3);
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+
+@keyframes move{
+  0%{background-position:0%}
+  100%{background-position:100%}
+}
+
+header h1{margin:0;}
+header p{margin:5px 0;}
+
+.cart-icon{
+  position:absolute;
+  right:20px;
+  top:25px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+/* GRID */
+.container{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:15px;
+  padding:20px;
+}
+
+.card{
+  background:white;
+  border-radius:12px;
+  padding:15px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+  transition:0.3s;
+  text-align:center;
+}
+
+.card:hover{transform:translateY(-5px);}
+
+/* IMG TIDAK TERPOTONG */
+.card img{
+  width:100%;
+  height:200px;
+  object-fit:contain;
+  background:white;
+  border-radius:10px;
+  padding:5px;
+}
+
+.detail-img{
+  width:100%;
+  max-width:400px;
+  object-fit:contain;
+}
+
+.price{color:#e53935;font-weight:bold;}
+.old{text-decoration:line-through;color:gray;font-size:12px;}
+
+.btn{
+  background:#e53935;
+  color:white;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  width:100%;
+  margin-top:10px;
+}
+
+.btn:disabled{background:gray;}
+
+.page{padding:20px;}
+.hidden{display:none;}
+
+.star{
+  font-size:20px;
+  cursor:pointer;
+  color:gray;
+}
+
+.review-box{
+  background:#fff;
+  padding:8px;
+  border-radius:8px;
+  margin-top:5px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>Papua Store by Kristian</h1>
+<p>Melestarikan Budaya Papua Melalui Karya Asli Nusantara</p>
+<div class="cart-icon" onclick="showCart()">🛒 (<span id="cartCount">0</span>)</div>
+</header>
+
+<div id="home" class="container"></div>
+<div id="detail" class="page hidden"></div>
+<div id="cartPage" class="page hidden"></div>
+<div id="checkoutPage" class="page hidden"></div>
+
+<script>
+
+const discount=0.1;
+let cart=[];
+
+const products=[
+{id:1,name:"Rok Rumbai",price:350000,stock:10,img:"rum.jpg",
+ desc:"Rok tradisional Papua dari serat alam.",
+ filosofi:"Melambangkan kesederhanaan dan kedekatan masyarakat Papua dengan alam.",
+ reviews:[],rating:0},
+
+{id:2,name:"Noken",price:250000,stock:15,img:"noken.jpg",
+ desc:"Tas rajut khas Papua.",
+ filosofi:"Simbol kehidupan dan identitas perempuan Papua.",
+ reviews:[],rating:0},
+
+{id:3,name:"Mahkota Papua",price:500000,stock:5,img:"Mahkota.jpg",
+ desc:"Mahkota bulu khas Papua.",
+ filosofi:"Melambangkan kehormatan dan kepemimpinan adat.",
+ reviews:[],rating:0},
+
+{id:4,name:"Topeng Asmat",price:700000,stock:4,img:"topeng.jpg",
+ desc:"Topeng khas suku Asmat.",
+ filosofi:"Menggambarkan roh leluhur dan perlindungan spiritual.",
+ reviews:[],rating:0},
+
+{id:5,name:"Manik-Manik Papua",price:150000,stock:20,img:"kalung.jpg",
+ desc:"Aksesoris khas Papua.",
+ filosofi:"Simbol persatuan dan keindahan budaya.",
+ reviews:[],rating:0},
+
+{id:6,name:"Pakaian Adat Biak",price:900000,stock:6,img:"biak.jpg",
+ desc:"Busana adat khas Biak.",
+ filosofi:"Melambangkan status sosial dan kebanggaan daerah.",
+ reviews:[],rating:0}
+];
+
+function showHome(){
+ document.getElementById("detail").classList.add("hidden");
+ document.getElementById("cartPage").classList.add("hidden");
+ document.getElementById("checkoutPage").classList.add("hidden");
+
+ const home=document.getElementById("home");
+ home.classList.remove("hidden");
+ home.innerHTML="";
+
+ products.forEach(p=>{
+   let final=p.price-(p.price*discount);
+   home.innerHTML+=`
+   <div class="card">
+   <img src="${p.img}">
+   <h3>${p.name}</h3>
+   <div class="old">Rp ${p.price.toLocaleString()}</div>
+   <div class="price">Rp ${final.toLocaleString()} (Diskon 10%)</div>
+   <p>⭐ ${p.rating.toFixed(1)} | Stok: ${p.stock}</p>
+   <button class="btn" onclick="showDetail(${p.id})">Lihat Detail</button>
+   <button class="btn" onclick="addToCart(${p.id})" ${p.stock<=0?"disabled":""}>Tambah ke Keranjang</button>
+   </div>`;
+ });
+
+ updateCartCount();
+}
+
+function showDetail(id){
+ const p=products.find(x=>x.id===id);
+
+ document.getElementById("home").classList.add("hidden");
+ const detail=document.getElementById("detail");
+ detail.classList.remove("hidden");
+
+ // REVIEW BAWAAN + REVIEW BARU
+ if(!p.textReviews){
+   p.textReviews=[
+     "Barang bagus, sesuai gambar 👍",
+     "Kualitas mantap, pengiriman cepat 🚀",
+     "Sangat puas, wajib beli ❤️"
+   ];
+ }
+
+ let reviewHTML="";
+ p.textReviews.forEach(r=>{
+   reviewHTML+=`<div class="review-box">💬 ${r}</div>`;
+ });
+
+ detail.innerHTML=`
+ <button onclick="showHome()">← Kembali</button>
+ <h2>${p.name}</h2>
+ <img src="${p.img}" class="detail-img">
+ <p>${p.desc}</p>
+ <p><b>Filosofi:</b> ${p.filosofi}</p>
+ <p><b>Stok:</b> ${p.stock}</p>
+
+ <h3>Rating: ⭐ ${p.rating.toFixed(1)}</h3>
+ <div>
+ ${[1,2,3,4,5].map(n=>`<span class="star" onclick="rate(${id},${n})">★</span>`).join("")}
+ </div>
+
+ <h3>Review Pelanggan</h3>
+ ${reviewHTML}
+
+ <textarea id="reviewText"
+ placeholder="Tulis review Anda..."
+ style="width:100%;height:80px;margin-top:8px;border-radius:8px;"></textarea>
+
+ <button class="btn" onclick="submitReview(${id})">
+ Kirim Review
+ </button>
+
+ <button class="btn" onclick="addToCart(${id})" ${p.stock<=0?"disabled":""}>
+ Tambah ke Keranjang
+ </button>
+ `;
+}
+
+function submitReview(id){
+ const p=products.find(x=>x.id===id);
+ const text=document.getElementById("reviewText").value.trim();
+
+ if(!text) return alert("Isi review dulu!");
+
+ p.textReviews.push(text);
+
+ alert("Review berhasil dikirim!");
+ showDetail(id);
+}
+
+function rate(id,value){
+ const p=products.find(x=>x.id===id);
+ p.reviews.push(value);
+ let total=p.reviews.reduce((a,b)=>a+b,0);
+ p.rating=total/p.reviews.length;
+ showDetail(id);
+}
+
+function addToCart(id){
+ const p=products.find(x=>x.id===id);
+ if(p.stock<=0)return alert("Stok habis!");
+ cart.push(id);
+ updateCartCount();
+ alert("Produk masuk keranjang");
+}
+
+function updateCartCount(){
+ document.getElementById("cartCount").innerText=cart.length;
+}
+
+function showCart(){
+ document.getElementById("home").classList.add("hidden");
+ document.getElementById("detail").classList.add("hidden");
+
+ const cartPage=document.getElementById("cartPage");
+ cartPage.classList.remove("hidden");
+
+ if(cart.length===0){
+   cartPage.innerHTML=`<button onclick="showHome()">← Kembali</button><h2>Keranjang Kosong</h2>`;
+   return;
+ }
+
+ let total=0;
+ let list="";
+
+ cart.forEach(id=>{
+   let p=products.find(x=>x.id===id);
+   let final=p.price-(p.price*discount);
+   total+=final;
+   list+=`<p>${p.name} - Rp ${final.toLocaleString()}</p>`;
+ });
+
+ cartPage.innerHTML=`
+ <button onclick="showHome()">← Kembali</button>
+ <h2>Keranjang</h2>
+ ${list}
+ <h3>Total: Rp ${total.toLocaleString()}</h3>
+ <button class="btn" onclick="checkout(${total})">Checkout</button>
+ `;
+}
+
+function checkout(total){
+ document.getElementById("cartPage").classList.add("hidden");
+
+ const checkoutPage=document.getElementById("checkoutPage");
+ checkoutPage.classList.remove("hidden");
+
+ checkoutPage.innerHTML=`
+ <button onclick="showCart()">← Kembali</button>
+ <h2>Simulasi Pembayaran</h2>
+ <p>Total Bayar: <b>Rp ${total.toLocaleString()}</b></p>
+ <select id="payment">
+ <option>Transfer Bank</option>
+ <option>E-Wallet</option>
+ <option>COD</option>
+ </select>
+ <button class="btn" onclick="pay()">Bayar Sekarang</button>
+ `;
+}
+
+function pay(){
+ cart.forEach(id=>{
+   let p=products.find(x=>x.id===id);
+   if(p.stock>0)p.stock--;
+ });
+ cart=[];
+ alert("Pembayaran Berhasil!");
+ showHome();
+}
+
+showHome();
+
+</script>
+</body>
+</html>
